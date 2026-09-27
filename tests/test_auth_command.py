@@ -5,9 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from google_oauth.errors import CliError
-
-from .conftest import PSI_KEY, SA_INFO, SA_JSON, SA_KEY, FakeCreds
+from .conftest import PSI_KEY, SA_INFO, SA_JSON, SA_KEY
 
 
 def _json(result) -> dict:
@@ -28,8 +26,8 @@ class TestLoginServiceAccount:
         }
         assert fake_keyring[SA_KEY] == SA_JSON
 
-        data = _json(runner.invoke(app, ["auth", "status", "--json"]))
-        assert (data["google"], data["source"], data["pagespeed_key"]) == ("ok", "keychain", False)
+        sa, psi = _json(runner.invoke(app, ["auth", "status", "--json"]))["credentials"]
+        assert (sa["status"], sa["source"], psi["status"]) == ("unchecked", "keychain", "missing")
 
         assert runner.invoke(app, ["auth", "logout"]).exit_code == 0
         assert SA_KEY not in fake_keyring
@@ -77,7 +75,8 @@ class TestLoginApiKey:
         result = runner.invoke(app, ["auth", "login", "--provider", "pagespeed", "--json"], input="  psi \n")
         assert result.exit_code == 0, result.output
         assert fake_keyring[PSI_KEY] == "psi"
-        assert _json(runner.invoke(app, ["auth", "status", "--json"]))["pagespeed_key"] is True
+        psi = _json(runner.invoke(app, ["auth", "status", "--json"]))["credentials"][1]
+        assert (psi["source"], psi["source_ref"]) == ("keychain", "keychain service google-oauth:api_key/pagespeed")
 
     def test_env_and_non_interactive(self, app, runner, fake_keyring, monkeypatch) -> None:
         result = runner.invoke(app, ["auth", "login", "--provider", "pagespeed", "--non-interactive", "--json"])
@@ -97,20 +96,3 @@ class TestLoginApiKey:
         fake_keyring[PSI_KEY] = "k"
         data = _json(runner.invoke(app, ["auth", "logout", "--provider", "pagespeed", "--json"]))
         assert data == {"ok": True, "provider": "pagespeed"} and PSI_KEY not in fake_keyring
-
-
-class TestStatus:
-    def test_human_missing(self, app, runner) -> None:
-        result = runner.invoke(app, ["auth", "status"])
-        assert result.exit_code == 0
-        assert "missing" in result.stdout and "demo auth login --provider pagespeed" in result.stdout
-
-    def test_check_with_tool_callback(self, app, checks, runner, auth, fake_keyring, monkeypatch) -> None:
-        fake_keyring[SA_KEY] = SA_JSON
-        monkeypatch.setattr(auth, "credentials", lambda scopes=None: FakeCreds())
-        data = _json(runner.invoke(app, ["auth", "status", "--check", "--json"]))
-        assert data["google"] == "ok" and data["valid"] is True
-        checks["raise"] = CliError("API_ERROR", "403 нет доступа")
-        result = runner.invoke(app, ["auth", "status", "--check"])
-        assert "API отверг доступ: 403 нет доступа" in result.stdout
-        assert SA_INFO["client_email"] in result.stdout

@@ -35,6 +35,8 @@ log = logging.getLogger(__name__)
 class CredentialStore:
     def __init__(self, profile: Profile) -> None:
         self.profile = profile
+        # Почему keychain не прочитался при последнем обращении (None — прочитался).
+        self.unavailable_reason: str | None = None
 
     # --- имена ---------------------------------------------------------------
 
@@ -68,11 +70,15 @@ class CredentialStore:
     def get(self, kind: str, name: str = DEFAULT) -> str | None:
         """Значение из keychain; недоступный keychain — не ошибка (остаются переменные окружения)."""
         try:
-            return keyring.get_password(self.service_name(kind), name) or None
+            value = keyring.get_password(self.service_name(kind), name) or None
         except keyring.errors.KeyringError as exc:
             # Headless Linux/CI без Secret Service не должен блокировать путь через env.
-            log.warning("Хранилище ключей ОС недоступно (%s); только переменные окружения", exc)
+            if self.unavailable_reason is None:  # предупредить один раз, а не на каждое чтение
+                log.warning("Хранилище ключей ОС недоступно (%s); только переменные окружения", exc)
+            self.unavailable_reason = str(exc) or type(exc).__name__
             return None
+        self.unavailable_reason = None
+        return value
 
     def set(self, kind: str, value: str, name: str = DEFAULT) -> None:
         try:

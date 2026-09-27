@@ -65,3 +65,16 @@ class CredentialStoreUnavailable(CliError):
             action=f"Задайте ключ переменной окружения вместо 'auth login' (см. '{profile.cli_name} auth login --help').",
             exit_code=1,
         )
+
+
+class CredentialsUnhealthy(CliError):
+    """`auth status` нашёл проблему (§8 стандарта tools): отчёт выводится целиком, рядом — эта ошибка, exit 3."""
+
+    def __init__(self, profile: Profile, problems: dict[str, str]) -> None:
+        listed = ", ".join(f"{provider} ({status})" for provider, status in problems.items())
+        super().__init__(
+            "CREDENTIALS_UNHEALTHY",
+            f"Учётные данные требуют внимания: {listed}.",
+            action=f"Подробности — в `message` каждой записи; войти заново: '{profile.login_cmd}'.",
+            exit_code=3,
+        )

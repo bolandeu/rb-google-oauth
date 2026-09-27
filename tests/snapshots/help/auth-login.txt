@@ -1,0 +1,33 @@
+
+ Usage: demo auth login [OPTIONS]
+
+ Сохранить доступ Google в общий слот keychain ОС (один на все Google-инструменты).
+
+ google: JSON-ключ сервисного аккаунта — из --file, иначе из
+ DEMO_SA_JSON / GOOGLE_OAUTH_SERVICE_ACCOUNT_JSON / DEMO_SA_FILE /
+ GOOGLE_OAUTH_SERVICE_ACCOUNT_FILE, иначе спросит путь к файлу.
+ Добавьте email в Демо.
+
+ pagespeed: API-ключ PageSpeed Insights из DEMO_PSI_KEY / GOOGLE_OAUTH_PAGESPEED_API_KEY, иначе
+ спросит скрытым вводом.
+
+ --json: {"ok": true, "provider", "account", "stored"}.
+
+
+ Примеры:
+   demo auth login --file ~/Downloads/service-account.json
+   demo auth login --provider pagespeed
+
+ Example: demo auth login --file ~/Downloads/service-account.json
+
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
+│ --provider                 <str>   google — сервисный аккаунт; pagespeed — API-ключ PageSpeed    │
+│                                    Insights.                                                     │
+│                                    [default: google]                                             │
+│ --file             -f      <file>  JSON-ключ сервисного аккаунта (для --provider по умолчанию).  │
+│ --non-interactive                  Never prompt; fail instead.                                   │
+│ --json                             Emit machine-readable JSON output.                            │
+│ --quiet                            Suppress non-essential output.                                │
+│ --help                             Show this message and exit.                                   │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+

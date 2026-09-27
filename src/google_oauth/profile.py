@@ -13,12 +13,15 @@ class ApiKey:
     env   — «исторические» переменные окружения инструмента с этим ключом,
             по порядку; они приоритетнее общей `GOOGLE_OAUTH_<NAME>_API_KEY`.
     hint  — где взять ключ (для `auth login --help`).
+    required — без ключа инструмент не работает: в `auth status` его отсутствие —
+            код выхода 3 (иначе — только запись `missing`, §8 стандарта tools).
     """
 
     name: str
     title: str
     env: tuple[str, ...] = ()
     hint: str = ""
+    required: bool = False
 
 
 @dataclass(frozen=True)
