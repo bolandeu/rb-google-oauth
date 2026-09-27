@@ -1,0 +1,95 @@
+# google-oauth
+
+Общая авторизация Google для CLI-инструментов (`gsc`, …) — аналог [yandex-oauth](https://github.com/bolandeu/yandex-oauth) для Google. Один набор ключей — **в общем слоте keychain `google-oauth:*`** для всех инструментов: вход в любом из них авторизует остальные. Без дублирования кода и без `.env`-файлов.
+
+Сейчас поддерживаются ключ **сервисного аккаунта** (access token получается и обновляется сам через `google-auth`) и **API-ключи** (PageSpeed Insights и другие). Вход пользователя через браузер (OAuth) пока не нужен, но схема хранения к нему готова (см. «Как добавить OAuth пользователя»).
+
+Только macOS и Linux.
+
+## Что даёт
+
+| Объект | Назначение |
+|---|---|
+| `Profile` | Чем инструмент отличается: имя CLI, название сервиса, scopes, «исторические» env-переменные инструмента, нужные API-ключи (`ApiKey`), подсказка после входа |
+| `GoogleAuth(profile)` | Найти ключ сервисного аккаунта / API-ключ, `credentials(scopes)` (google-auth), `refresh(creds)`, `bearer(scopes).headers()` — токен с автообновлением для каждого запроса, `status(check=)`, `store_*`, `logout` |
+| `CredentialStore(profile)` | Keychain ОС через `keyring` + имена переменных окружения; `backend()` для `doctor` |
+| `make_auth_app(auth, output, check=None)` | Готовая Typer-команда `auth login / logout / status [--check]` (модуль `google_oauth.auth_command`) |
+| Ошибки | `CliError` (базовый — его ловит `output.guard` инструмента), `InvalidArguments` (exit 2), `NotAuthorized` (exit 3), `TokenRequestFailed` (exit 5), `CredentialStoreUnavailable` |
+
+Импорт `google_oauth` не трогает сеть, keychain, `google-auth` и `typer`.
+
+## Где лежат ключи
+
+| Что | Keychain (service / account) | Переменные окружения (по приоритету) |
+|---|---|---|
+| Ключ сервисного аккаунта (JSON) | `google-oauth:service_account` / `default` | env инструмента из профиля (например `GSC_GOOGLE_SERVICE_ACCOUNT_JSON`) → `GOOGLE_OAUTH_SERVICE_ACCOUNT_JSON` → env инструмента с путём к файлу → `GOOGLE_OAUTH_SERVICE_ACCOUNT_FILE` |
+| API-ключ `<name>` | `google-oauth:api_key` / `<name>` | env инструмента (например `GSC_PAGESPEED_API_KEY`) → `GOOGLE_OAUTH_<NAME>_API_KEY` |
+
+Любая переменная окружения приоритетнее keychain. Недоступный keychain (headless Linux без Secret Service) при чтении — не ошибка: работают переменные окружения. На сервере — env-файл `chmod 600` или бэкенд `keyrings.alt`.
+
+## Подключение к инструменту
+
+`pyproject.toml` инструмента:
+
+```toml
+dependencies = ["google-oauth", ...]
+
+[tool.uv.sources]
+google-oauth = { git = "https://github.com/bolandeu/google-oauth.git" }
+```
+
+Профиль:
+
+```python
+from google_oauth import ApiKey, GoogleAuth, Profile
+
+PROFILE = Profile(
+    cli_name="gsc",
+    service="Google Search Console",
+    scopes=("https://www.googleapis.com/auth/webmasters.readonly", "https://www.googleapis.com/auth/webmasters"),
+    service_account_env=("GSC_GOOGLE_SERVICE_ACCOUNT_JSON", "GOOGLE_SERVICE_ACCOUNT_JSON"),
+    service_account_file_env=("GOOGLE_SERVICE_ACCOUNT_FILE",),
+    api_keys=(ApiKey("pagespeed", "PageSpeed Insights", env=("GSC_PAGESPEED_API_KEY", "GOOGLE_PAGESPEED_API_KEY")),),
+)
+auth = GoogleAuth(PROFILE)
+```
+
+Клиент API:
+
+```python
+bearer = auth.bearer(scopes)  # ключ читается при первом запросе
+headers = bearer.headers()  # {"Authorization": "Bearer …"}, обновляется сам
+psi_key = auth.api_key("pagespeed")  # или None
+```
+
+Команда: `app.add_typer(make_auth_app(auth, output), name="auth")`. `core/errors.py` инструмента импортирует `CliError`/`InvalidArguments`/`NotAuthorized` отсюда, чтобы `output.guard` ловил ошибки общего кода. Тесты инструмента подменяют `google_oauth.credentials.keyring.*` (или тот же модуль через реэкспорт).
+
+## Почему так: готовые библиотеки
+
+По правилу «сначала готовое» сравнивались (сентябрь 2026):
+
+| Библиотека | Решение |
+|---|---|
+| **`google-auth`** (Google, Apache 2.0) | **Берём.** Сервисный аккаунт с автообновлением токена, `api_key.Credentials`, токен пользователя из JSON (`from_authorized_user_info`), ADC, impersonation — вся криптография и работа с токенами |
+| **`keyring`** (MIT) | **Берём.** Keychain macOS / Secret Service Linux, как в yandex-oauth |
+| `google-auth-oauthlib` (Google) | Позже — для входа пользователя через браузер (`InstalledAppFlow`) |
+| `google-api-python-client` (Google) | Нет: это клиенты API, а не авторизация |
+| `oauth2client` (Google) | Нет: устарел с 2018, заменён google-auth |
+| `pydata-google-auth` | Нет: только вход пользователя, токен в файле, без сервисных аккаунтов и keychain |
+| `gcloud-aio-auth` | Нет: асинхронный, инструменты синхронные |
+| `Authlib` | Нет: универсальный OAuth, для Google избыточен |
+
+Своё здесь только то, чего нет ни в одной из них: общий слот keychain и порядок env-переменных, `Profile`, Typer-команда, статус и типизированные ошибки CLI.
+
+ADC (`google.auth.default()`, доступы `gcloud`) намеренно не подхватывается: он молча берёт чужие доступы с машины, и можно работать не под тем аккаунтом.
+
+## Как добавить OAuth пользователя
+
+Вид учётных данных уже в имени записи keychain (`google-oauth:<kind>`). Для OAuth: запись `google-oauth:authorized_user` / `default` с JSON формата google-auth (`Credentials.to_json()`), вход — `google-auth-oauthlib` `InstalledAppFlow.run_local_server`, чтение — `google.oauth2.credentials.Credentials.from_authorized_user_info`, после обновления токена — перезапись JSON в keychain. `BearerToken` уже работает с любыми google-auth Credentials.
+
+## Разработка
+
+```bash
+uv sync
+uv run ruff check . && uv run ruff format --check . && uv run ty check && uv run pytest
+```
