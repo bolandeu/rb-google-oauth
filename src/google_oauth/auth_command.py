@@ -135,6 +135,7 @@ def make_auth_app(
         + (f" {k.hint}" if k.hint else "")
         for k in profile.api_keys
     )
+    key_examples = "".join(f"\n      {profile.api_key_login_cmd(k.name)}" for k in profile.api_keys)
     login.__doc__ = f"""Сохранить доступ Google в общий слот keychain ОС (один на все Google-инструменты).
 
     {profile.provider}: JSON-ключ сервисного аккаунта — из --file, иначе из
@@ -147,8 +148,8 @@ def make_auth_app(
 
     \b
     Примеры:
-      {profile.cli_name} auth login --file ~/Downloads/service-account.json
-    """ + "".join(f"      {profile.api_key_login_cmd(k.name)}\n" for k in profile.api_keys)
+      {profile.cli_name} auth login --file ~/Downloads/service-account.json{key_examples}
+    """
     app.command("login")(output.guard(login))
 
     # --- logout --------------------------------------------------------------------
