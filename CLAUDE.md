@@ -29,3 +29,13 @@ uv run scripts/release.py --check   # гейт перед каждым комм�
 - Чтение из недоступного keychain — не ошибка (warning в лог), запись/удаление — `CredentialStoreUnavailable`.
 
 **Тесты:** `tests/fake_output.py` — минимальный `output`-модуль; `conftest.py` подменяет keyring словарём (ключи `("google-oauth:service_account", "default")`, `("google-oauth:api_key", "pagespeed")`) и чистит env `DEMO_*`/`GOOGLE_OAUTH_*`.
+
+## Каждое заметное изменение выходит релизом
+
+Серверы, другие инструменты и Mac ставят только по тегам, не из `main`:
+влитое без релиза изменение для них не существует. Изменение с фрагментом
+changelog закончено только после релиза: влить в `main` →
+`uv run scripts/release.py patch|minor|major` → попросить пользователя
+сделать push с `--follow-tags` → назвать новый тег в отчёте. Служебные коммиты
+(без фрагмента) ждут следующего релиза. Не оставлять фрагмент на `main` без
+релиза, не назвав причину (`~/Projects/tools/docs/standard-release.md` §3).
