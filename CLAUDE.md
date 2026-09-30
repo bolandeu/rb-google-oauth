@@ -9,7 +9,7 @@ uv run scripts/release.py --check   # гейт перед каждым комм�
 
 ## Что это
 
-Дистрибутив `rb-google-oauth` (импорт `google_oauth`). Общая библиотека авторизации Google для CLI-инструментов `~/Projects/tools/` (`gsc`, …), построенных по единой CLI-архитектуре (skill `cli-generator:cli-builder`). Аналог `yandex-oauth`. Не CLI сама по себе — подключается git-источником в `[tool.uv.sources]` инструмента, см. README.
+Дистрибутив `rb-google-oauth` (импорт `google_oauth`). Общая библиотека авторизации Google для CLI-инструментов `~/Work/tools/` (`gsc`, …), построенных по единой CLI-архитектуре (skill `cli-generator:cli-builder`). Аналог `yandex-oauth`. Не CLI сама по себе — подключается git-источником в `[tool.uv.sources]` инструмента, см. README.
 
 **Source layout:** `src/google_oauth/`
 
@@ -38,13 +38,13 @@ changelog закончено только после релиза: влить в
 `uv run scripts/release.py patch|minor|major` → попросить пользователя
 сделать push с `--follow-tags` → назвать новый тег в отчёте. Служебные коммиты
 (без фрагмента) ждут следующего релиза. Не оставлять фрагмент на `main` без
-релиза, не назвав причину (`~/Projects/tools/docs/standard-release.md` §3).
+релиза, не назвав причину (`~/Work/tools/docs/standard-release.md` §3).
 
 ## Инструмент в системе
 
-Инструмент — один из сервисов `~/Projects/tools/`: корневой агент его
+Инструмент — один из сервисов `~/Work/tools/`: корневой агент его
 деплоит, хранит ключи (Doppler) и бэкапит данные (S3). Полные правила —
-`~/Projects/tools/docs/standard-release.md` §13.
+`~/Work/tools/docs/standard-release.md` §13.
 
 - **Сообщать корневому агенту** (в отчёте пользователю, рядом с тегом
   релиза): новая или переименованная переменная окружения / ключ, новая
