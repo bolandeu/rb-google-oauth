@@ -2,6 +2,28 @@
 
 Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## v0.2.1 — 2026-10-24
+
+### Main
+
+- chore(antagor): publish config (semver, remote gate, deploy by push)
+- daemon: enabled
+- mode: fast
+- antagor init: project google-oauth (GOAUTH)
+- chore: drop the core.hooksPath hook and fragment notes
+- fix(deps): certifi 2026.10.19 (PYSEC-2026-4320)
+- docs: AGENTS.md; ci: Gitea workflow runs the gate (template v1.27.3)
+- build: [tool.rb.install] for a library, coverage core ctrace, drop towncrier
+- chore: remove the old release tooling (release.py, githooks, towncrier fragments, GitHub CI)
+- test: help snapshots render the same under CI env (GITHUB_ACTIONS, FORCE_COLOR, PY_COLORS)
+- chore: пути ~/Projects → ~/Work после переезда
+- chore(hooks): скрипты tools ищутся относительно репозитория (перенос tools не ломает хуки)
+- chore(claude): при старте сессии агент берёт имя в herdr по команде
+- chore(hooks): pre-push сообщает корневому агенту tools о пушнутых тегах
+- docs: инструмент в системе (стандарт §13)
+- docs: каждое заметное изменение выходит релизом
+
+
 ## [0.2.0] - 2026-09-27
 
 ### Added
