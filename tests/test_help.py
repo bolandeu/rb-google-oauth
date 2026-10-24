@@ -28,6 +28,7 @@ from pathlib import Path
 
 import pytest
 import typer
+import typer.rich_utils
 from syrupy.extensions.single_file import SingleFileSnapshotExtension, WriteMode
 from typer.models import ParameterInfo
 from typer.testing import CliRunner
@@ -75,6 +76,12 @@ GROUPS = dict(_groups(app))
 HELP_PAGES = sorted([*COMMANDS, *GROUPS])
 
 
+@pytest.fixture(autouse=True)
+def _plain_help(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Typer reads GITHUB_ACTIONS / FORCE_COLOR / PY_COLORS once, at import, and then forces terminal output (CI)."""
+    monkeypatch.setattr(typer.rich_utils, "FORCE_TERMINAL", False)
+
+
 def _slug(path: tuple[str, ...]) -> str:
     return "-".join(path)
 
@@ -104,6 +111,10 @@ class HelpSnapshot(SingleFileSnapshotExtension):
 @pytest.mark.parametrize("path", HELP_PAGES, ids=_slug)
 def test_help_snapshot(path: tuple[str, ...], snapshot) -> None:
     assert _render_help(path) == snapshot(extension_class=HelpSnapshot, name=_slug(path))
+
+
+def test_help_is_the_same_in_ci(same_in_ci: Callable[[str], None]) -> None:
+    same_in_ci("test_help_snapshot")
 
 
 def test_no_orphan_help_snapshots() -> None:
