@@ -8,3 +8,5 @@ dist/
 *.egg-info/
 .python-version
 htmlcov/
+.DS_Store
+Thumbs.db
