@@ -1,26 +1,25 @@
 """Keychain ОС + переменные окружения — где лежат ключи Google.
 
-Пространство имён общее для всех инструментов (`Profile.keychain_namespace`,
-по умолчанию `google-oauth`). Запись keychain — пара (service, username):
+Пространство имён общее для всех инструментов (`Profile.keychain_namespace`, по умолчанию `google-oauth`).
+Запись keychain — пара (service, username):
 
 - ключ сервисного аккаунта: `google-oauth:service_account` / `default`, значение — JSON ключа как есть;
 - API-ключ: `google-oauth:api_key` / `<имя ключа>` (`pagespeed`, …), значение — ключ.
 
-Вид (kind) в имени сервиса оставляет место для OAuth пользователя позже
-(`google-oauth:authorized_user`) без переделки схемы.
+Сам keychain, «прочитать один раз, предупредить один раз» и разбор недоступности — в общем `rb-credentials`;
+здесь остаются имена Google, переменные окружения и маппинг ошибок на `CredentialStoreUnavailable`.
 
-Переменные окружения переопределяют keychain: сначала «исторические»
-переменные инструмента из профиля, затем общие `GOOGLE_OAUTH_…`.
+Переменные окружения переопределяют keychain: сначала «исторические» переменные инструмента из профиля,
+затем общие `GOOGLE_OAUTH_…`.
 """
 
 from __future__ import annotations
 
-import logging
 import os
 
-import keyring
-import keyring.errors
+import keyring  # noqa: F401 — реэкспорт: тесты подменяют `google_oauth.credentials.keyring.*`
 from keyring.backends import fail
+from rb_credentials import Store, StoreUnavailable
 
 from .errors import CredentialStoreUnavailable
 from .profile import ApiKey, Profile
@@ -29,19 +28,21 @@ SERVICE_ACCOUNT = "service_account"
 API_KEY = "api_key"
 DEFAULT = "default"
 
-log = logging.getLogger(__name__)
-
 
 class CredentialStore:
     def __init__(self, profile: Profile) -> None:
         self.profile = profile
-        # Почему keychain не прочитался при последнем обращении (None — прочитался).
-        self.unavailable_reason: str | None = None
+        self._store = Store(profile.keychain_namespace)
 
     # --- имена ---------------------------------------------------------------
 
     def service_name(self, kind: str) -> str:
-        return f"{self.profile.keychain_namespace}:{kind}"
+        return self._store.service_name(kind)
+
+    @property
+    def unavailable_reason(self) -> str | None:
+        """Почему keychain не прочитался при последнем обращении (None — прочитался)."""
+        return self._store.unavailable_reason
 
     @property
     def env_prefix(self) -> str:
@@ -69,29 +70,18 @@ class CredentialStore:
 
     def get(self, kind: str, name: str = DEFAULT) -> str | None:
         """Значение из keychain; недоступный keychain — не ошибка (остаются переменные окружения)."""
-        try:
-            value = keyring.get_password(self.service_name(kind), name) or None
-        except keyring.errors.KeyringError as exc:
-            # Headless Linux/CI без Secret Service не должен блокировать путь через env.
-            if self.unavailable_reason is None:  # предупредить один раз, а не на каждое чтение
-                log.warning("Хранилище ключей ОС недоступно (%s); только переменные окружения", exc)
-            self.unavailable_reason = str(exc) or type(exc).__name__
-            return None
-        self.unavailable_reason = None
-        return value
+        return self._store.get_value(kind, name)
 
     def set(self, kind: str, value: str, name: str = DEFAULT) -> None:
         try:
-            keyring.set_password(self.service_name(kind), name, value)
-        except keyring.errors.KeyringError as exc:
+            self._store.set_value(kind, value, name)
+        except StoreUnavailable as exc:
             raise CredentialStoreUnavailable(self.profile, str(exc)) from exc
 
     def delete(self, kind: str, name: str = DEFAULT) -> None:
         try:
-            keyring.delete_password(self.service_name(kind), name)
-        except keyring.errors.PasswordDeleteError:
-            pass  # уже отсутствует — удаление не ошибка
-        except keyring.errors.KeyringError as exc:
+            self._store.delete_value(kind, name)
+        except StoreUnavailable as exc:
             raise CredentialStoreUnavailable(self.profile, str(exc)) from exc
 
     @staticmethod
