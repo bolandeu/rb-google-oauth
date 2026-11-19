@@ -27,7 +27,7 @@
 | Ключ сервисного аккаунта (JSON) | `google-oauth:service_account` / `default` | env инструмента из профиля (например `GSC_GOOGLE_SERVICE_ACCOUNT_JSON`) → `GOOGLE_OAUTH_SERVICE_ACCOUNT_JSON` → env инструмента с путём к файлу → `GOOGLE_OAUTH_SERVICE_ACCOUNT_FILE` |
 | API-ключ `<name>` | `google-oauth:api_key` / `<name>` | env инструмента (например `GSC_PAGESPEED_API_KEY`) → `GOOGLE_OAUTH_<NAME>_API_KEY` |
 
-Любая переменная окружения приоритетнее keychain. Недоступный keychain (headless Linux без Secret Service) при чтении — не ошибка: работают переменные окружения, `auth status` называет причину. На сервере ключи задаются окружением, например через Doppler — `doppler run -- gsc …` с `GOOGLE_OAUTH_SERVICE_ACCOUNT_JSON` (JSON ключа целиком) и `GOOGLE_OAUTH_<NAME>_API_KEY`; ничего не записывается, `auth login` не нужен.
+Любая переменная окружения приоритетнее keychain. Недоступный keychain (headless Linux без Secret Service) при чтении — не ошибка: работают переменные окружения, `auth status` называет причину. На сервере ключи задаются окружением, например через секрет-менеджер — `env-переменные из секрет-менеджера -- gsc …` с `GOOGLE_OAUTH_SERVICE_ACCOUNT_JSON` (JSON ключа целиком) и `GOOGLE_OAUTH_<NAME>_API_KEY`; ничего не записывается, `auth login` не нужен.
 
 ## Подключение к инструменту
 

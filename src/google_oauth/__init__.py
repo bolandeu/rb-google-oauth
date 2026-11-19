@@ -12,7 +12,7 @@ keychain `google-oauth:*` для всех инструментов (gsc, …): �
 - `make_auth_app(auth, output)` (модуль `auth_command`) — готовая Typer-команда
   `auth login|logout|status [--check]`.
 
-Без keychain (Linux-сервер, `doppler run`) всё работает от переменных окружения
+Без keychain (Linux-сервер, запуск с переменными окружения из секрет-менеджера) всё работает от переменных окружения
 (`GOOGLE_OAUTH_SERVICE_ACCOUNT_JSON`, `GOOGLE_OAUTH_<NAME>_API_KEY`, …).
 
 Импорт не трогает сеть, keychain, google-auth и typer.

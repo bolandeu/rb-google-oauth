@@ -174,7 +174,7 @@ class TestSources:
 
 
 class TestWithoutKeychain:
-    """Linux-сервер без Secret Service, ключи из env (doppler run)."""
+    """Linux-сервер без Secret Service, ключи из env (запуск с переменными из секрет-менеджера)."""
 
     @pytest.fixture(autouse=True)
     def _no_keychain(self, monkeypatch):
