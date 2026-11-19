@@ -112,7 +112,7 @@ ADC (`google.auth.default()`, доступы `gcloud`) намеренно не �
 
 ```bash
 uv sync
-uvx --from "git+https://homeserver.tailee01ab.ts.net:3000/bolandeu/cli-generator.git@v1.27.3#subdirectory=gate" rb-release check   # гейт: lock, ruff, ty, pytest, wheel, osv-scanner, gitleaks
+gate check   # гейт: lock, ruff, ty, pytest, wheel, osv-scanner, gitleaks; идёт на этой машине
 ```
 
 Версия — из git-тега `vX.Y.Z`; релиз — `antagor publish` (стандарт: https://homeserver.tailee01ab.ts.net:3000/bolandeu/cli-generator/src/branch/main/skills/cli-builder/reference/standard.md, «Release»). Справка команд `auth` — контракт: `uv run pytest --snapshot-update` после её изменения.

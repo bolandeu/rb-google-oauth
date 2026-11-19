@@ -4,7 +4,7 @@
 
 ```bash
 uv sync
-# гейт перед каждым коммитом — шаг `rb-release check` в .gitea/workflows/ci.yml (единственное место с командой)
+# гейт перед каждым коммитом — `gate check` на этой машине (команда — [publish] gate_command в .agents/antagor/antagor.toml)
 ```
 
 ## Что это

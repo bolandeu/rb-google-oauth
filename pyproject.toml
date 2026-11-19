@@ -8,7 +8,7 @@ authors = [{ name = "bolandau" }]
 dependencies = [
     "google-auth[requests]>=2.30",
     "keyring>=25.0",
-    "typer>=0.12",
+    "typer>=0.27,<0.29",
 ]
 
 [dependency-groups]
