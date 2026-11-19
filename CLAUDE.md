@@ -9,7 +9,7 @@ uv sync
 
 ## Что это
 
-Дистрибутив `rb-google-oauth` (импорт `google_oauth`). Общая библиотека авторизации Google для CLI-инструментов `~/Work/tools/` (`gsc`, …), построенных по единой CLI-архитектуре (skill `cli-generator:cli-builder`). Аналог `yandex-oauth`. Не CLI сама по себе — подключается git-источником в `[tool.uv.sources]` инструмента, см. README.
+Дистрибутив `rb-google-oauth` (импорт `google_oauth`). Общая библиотека авторизации Google для CLI-инструментов `~/Work/tools/` (`gsc`, …), построенных по единой CLI-архитектуре (skill `python-package-gate:cli-builder`). Аналог `yandex-oauth`. Не CLI сама по себе — подключается git-источником в `[tool.uv.sources]` инструмента, см. README.
 
 **Source layout:** `src/google_oauth/`
 

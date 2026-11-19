@@ -1,8 +1,10 @@
 [project]
 name = "rb-google-oauth"
 dynamic = ["version"]
-description = "Общая авторизация Google для CLI-инструментов (gsc, …): сервисный аккаунт и API-ключи в общем слоте keychain, access token с автообновлением, команда auth"
+description = "Shared Google authorization for CLI tools: a service account and API keys in one keychain slot."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 authors = [{ name = "bolandau" }]
 dependencies = [
