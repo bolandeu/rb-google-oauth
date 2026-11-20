@@ -22,39 +22,30 @@ from __future__ import annotations
 
 import concurrent.futures
 from collections.abc import Callable
-from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Literal
+
+from rb_credentials.status import (
+    Health,
+    HealthStatus,
+    Quota,  # noqa: F401 — public here since 0.1 (`google_oauth.Quota`)
+    entry,
+    exit_code,
+    iso,
+    problems,
+    report,
+    scrub,
+)
 
 from .auth import GoogleAuth, parse_service_account
 from .credentials import CredentialStore
 from .errors import CliError, InvalidArguments, NotAuthorized
 
-EXIT_OK = 0
-EXIT_PROBLEM = 3
 CHECK_TIMEOUT = 10.0  # §8: жёсткий лимит на проверку одного провайдера, без повторов
-HEALTHY = frozenset({"ok", "unchecked"})
-# Проблема даже для необязательного провайдера: учётные данные есть, но негодные.
-ALWAYS_PROBLEMS = frozenset({"invalid", "expired"})
 
-HealthStatus = Literal["ok", "invalid", "expired", "quota_exhausted", "unreachable"]
-
-
-@dataclass(frozen=True)
-class Quota:
-    remaining: int | None = None
-    limit: int | None = None
-    unit: str = "requests"
-
-
-@dataclass(frozen=True)
-class Health:
-    """Итог живой проверки — поля как у `providers.base.Health` шаблона cli-generator."""
-
-    status: HealthStatus = "ok"
-    expires_at: datetime | None = None
-    quota: Quota | None = None
-    message: str | None = None
+# Форма отчёта — одна на весь набор пакетов (rb-credentials, ADR 0017); ниже имена, которые зовут с 0.1.
+status_report = report
+status_problems = problems
+status_exit_code = exit_code
 
 
 def health_check(
@@ -104,7 +95,7 @@ def _probe(auth: GoogleAuth, provider: str, check: Callable[[], object] | None) 
         if check is not None:
             check()
     except Exception as exc:
-        return Health(status=_failure_status(exc), message=_scrub(_message(exc), secrets))
+        return Health(status=_failure_status(exc), message=scrub(_message(exc), secrets))
     return Health(status="ok")
 
 
@@ -129,19 +120,8 @@ def _message(exc: Exception) -> str:
     return exc.message if isinstance(exc, CliError) else f"{type(exc).__name__}: {exc}"
 
 
-def _scrub(message: str, secrets: list[str | None]) -> str:
-    for secret in secrets:
-        if secret:
-            message = message.replace(secret, "***")
-    return message
-
-
 def _now() -> datetime:
     return datetime.now(UTC)
-
-
-def _iso(moment: datetime | None) -> str | None:
-    return moment.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z") if moment else None
 
 
 def credential_status(
@@ -165,17 +145,7 @@ def credential_status(
     is_sa = provider == profile.provider
     if required is None:
         required = True if is_sa else profile.api_key(provider).required
-    entry: dict = {
-        "provider": provider,
-        "required": required,
-        "fields": ["service_account_json" if is_sa else "api_key"],
-        "source": "missing",
-        "source_ref": None,
-        "status": "missing",
-        "expires_at": None,
-        "quota": None,
-        "message": None,
-    }
+    record = entry(provider, required=required, fields=["service_account_json" if is_sa else "api_key"])
 
     if is_sa:
         env_names = store.service_account_json_env() + store.service_account_file_env()
@@ -184,8 +154,8 @@ def credential_status(
         try:
             found = auth.find_service_account()
         except NotAuthorized as exc:  # переменная указывает на несуществующий файл
-            entry.update(source="file", source_ref=_file_env(store), message=exc.message)
-            return entry
+            record.update(source="file", source_ref=_file_env(store), message=exc.message)
+            return record
     else:
         key = profile.api_key(provider)
         env_names = store.api_key_env(key)
@@ -195,69 +165,39 @@ def credential_status(
 
     if found is None:
         reason = store.unavailable_reason
-        entry["source_ref"] = " or ".join([*env_names, keychain_ref])
-        entry["message"] = (f"Keychain недоступен ({reason}). " if reason else "") + (
+        record["source_ref"] = " or ".join([*env_names, keychain_ref])
+        record["message"] = (f"Keychain недоступен ({reason}). " if reason else "") + (
             f"Нет ключа: выполните '{login}' или задайте {env_names[0]}."
         )
-        return entry
+        return record
 
     source_ref = {"env": found.origin, "file": found.origin, "keychain": f"keychain service {found.origin}"}
-    entry.update(source=found.source, source_ref=source_ref[found.source])
+    record.update(source=found.source, source_ref=source_ref[found.source])
     if is_sa:
         try:
             parse_service_account(found.value)
         except InvalidArguments as exc:
-            entry.update(status="invalid", message=exc.message)
-            return entry
+            record.update(status="invalid", message=exc.message)
+            return record
 
     if not live:
-        entry["status"] = "unchecked"
-        return entry
+        record["status"] = "unchecked"
+        return record
     if check is None and not is_sa:
-        entry.update(status="unchecked", message="Инструмент не задал проверочного запроса к API.")
-        return entry
+        record.update(status="unchecked", message="Инструмент не задал проверочного запроса к API.")
+        return record
 
     health = health_check(auth, check, provider=provider)
-    entry.update(
+    record.update(
         status=health.status,
-        expires_at=_iso(health.expires_at),
+        expires_at=iso(health.expires_at),
         quota=vars(health.quota) if health.quota else None,
         message=health.message,
     )
-    return entry
+    return record
 
 
 def _file_env(store: CredentialStore) -> str:
     """Имя переменной с путём к файлу ключа, которая задана (для source_ref)."""
     found = store.first_env(store.service_account_file_env())
     return found[1] if found else ", ".join(store.service_account_file_env())
-
-
-def status_report(tool: str, version: str, credentials: list[dict]) -> dict:
-    """Весь отчёт `auth status` по §8: инструмент, версия, время проверки, список учётных данных.
-
-    Конверт (`ok`, а при exit 3 — ещё `error` CREDENTIALS_UNHEALTHY) добавляет команда.
-    """
-    return {
-        "tool": tool,
-        "version": version,
-        "checked_at": _iso(_now()),
-        "credentials": credentials,
-    }
-
-
-def is_problem(entry: dict) -> bool:
-    """Запись валит `auth status`: invalid/expired — всегда, прочее не ok/unchecked — если провайдер обязателен."""
-    if entry["status"] in ALWAYS_PROBLEMS:
-        return True
-    return entry["required"] and entry["status"] not in HEALTHY
-
-
-def status_problems(report: dict) -> dict[str, str]:
-    """Провайдер → статус для всех проблемных записей (для ошибки CREDENTIALS_UNHEALTHY)."""
-    return {entry["provider"]: entry["status"] for entry in report["credentials"] if is_problem(entry)}
-
-
-def status_exit_code(report: dict) -> int:
-    """0 — нет проблемных записей (см. `is_problem`), иначе 3."""
-    return EXIT_PROBLEM if status_problems(report) else EXIT_OK

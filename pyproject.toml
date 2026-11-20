@@ -10,7 +10,7 @@ authors = [{ name = "bolandau" }]
 dependencies = [
     "google-auth[requests]>=2.30",
     "keyring>=25.0",
-    "rb-credentials>=0.4,<1",
+    "rb-credentials>=0.7.1,<1",
     "typer>=0.27,<0.29",
 ]
 
