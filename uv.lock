@@ -861,7 +861,7 @@ wheels = [
 
 [[package]]
 name = "rb-credentials"
-source = { directory = "../rb-credentials" }
+source = { editable = "../rb-credentials" }
 dependencies = [
     { name = "pydantic" },
 ]
@@ -905,7 +905,7 @@ dev = [
 requires-dist = [
     { name = "google-auth", extras = ["requests"], specifier = ">=2.30" },
     { name = "keyring", specifier = ">=25.0" },
-    { name = "rb-credentials", directory = "../rb-credentials" },
+    { name = "rb-credentials", editable = "../rb-credentials" },
     { name = "typer", specifier = ">=0.27,<0.29" },
 ]
 
