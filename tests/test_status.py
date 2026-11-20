@@ -194,7 +194,7 @@ class TestWithoutKeychain:
 
     def test_missing_mentions_keychain(self, auth):
         entry = credential_status(auth)
-        assert entry["status"] == "missing" and "Keychain недоступен (No recommended backend" in entry["message"]
+        assert entry["status"] == "missing" and "Keychain unavailable (No recommended backend" in entry["message"]
 
     def test_bearer_from_env(self, auth, monkeypatch, fake_token):
         monkeypatch.setenv("GOOGLE_OAUTH_SERVICE_ACCOUNT_JSON", SA_JSON)

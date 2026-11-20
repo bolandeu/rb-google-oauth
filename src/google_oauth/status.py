@@ -77,7 +77,7 @@ def health_check(
     try:
         return pool.submit(_probe, auth, provider, check).result(timeout=timeout)
     except concurrent.futures.TimeoutError:
-        return Health(status="unreachable", message=f"Нет ответа за {timeout:g} с.")
+        return Health(status="unreachable", message=f"No response within {timeout:g} s.")
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
 
@@ -166,8 +166,8 @@ def credential_status(
     if found is None:
         reason = store.unavailable_reason
         record["source_ref"] = " or ".join([*env_names, keychain_ref])
-        record["message"] = (f"Keychain недоступен ({reason}). " if reason else "") + (
-            f"Нет ключа: выполните '{login}' или задайте {env_names[0]}."
+        record["message"] = (f"Keychain unavailable ({reason}). " if reason else "") + (
+            f"No key: run '{login}' or set {env_names[0]}."
         )
         return record
 
@@ -184,7 +184,7 @@ def credential_status(
         record["status"] = "unchecked"
         return record
     if check is None and not is_sa:
-        record.update(status="unchecked", message="Инструмент не задал проверочного запроса к API.")
+        record.update(status="unchecked", message="The tool set no API check.")
         return record
 
     health = health_check(auth, check, provider=provider)
