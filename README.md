@@ -77,7 +77,6 @@ psi_key = auth.api_key("pagespeed")  # или None
 ```python
 import google_oauth
 
-
 def health_check(self) -> Health:
     return google_oauth.health_check(GOOGLE_AUTH, check=lambda: self.get_json("/sites"))
     # API-ключ: google_oauth.health_check(GOOGLE_AUTH, check, provider="pagespeed")
