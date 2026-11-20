@@ -10,7 +10,7 @@ from pathlib import Path
 import keyring.errors
 import pytest
 
-from google_oauth import GoogleAuth, NotAuthorized, TokenRequestFailed, parse_service_account
+from rb_google_oauth import GoogleAuth, NotAuthorized, TokenRequestFailed, parse_service_account
 
 from .conftest import PSI_KEY, SA_INFO, SA_JSON, SA_KEY, FakeCreds
 
@@ -60,7 +60,7 @@ class TestServiceAccountSources:
         def broken(service: str, username: str) -> str | None:
             raise keyring.errors.NoKeyringError("no backend")
 
-        monkeypatch.setattr("google_oauth.credentials.keyring.get_password", broken)
+        monkeypatch.setattr("rb_google_oauth.credentials.keyring.get_password", broken)
         assert auth.find_service_account() is None
         monkeypatch.setenv("DEMO_PSI_KEY", "k")
         assert auth.api_key("pagespeed") == "k"
@@ -178,13 +178,13 @@ class TestStatus:
 
 
 def test_backend_name() -> None:
-    from google_oauth import CredentialStore
+    from rb_google_oauth import CredentialStore
 
     assert CredentialStore.backend() is None or "." in (CredentialStore.backend() or "")
 
 
 def test_import_has_no_side_effects() -> None:
-    """import google_oauth не тянет typer и google-auth — отдельный процесс, чистый sys.modules."""
-    code = "import sys, google_oauth; print('typer' in sys.modules, 'google.auth' in sys.modules)"
+    """import rb_google_oauth не тянет typer и google-auth — отдельный процесс, чистый sys.modules."""
+    code = "import sys, rb_google_oauth; print('typer' in sys.modules, 'google.auth' in sys.modules)"
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)  # noqa: S603
     assert out.stdout.split() == ["False", "False"]

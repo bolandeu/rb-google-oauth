@@ -59,7 +59,7 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/google_oauth"]
+packages = ["src/rb_google_oauth"]
 
 [tool.rb.install]
 homeserver = []

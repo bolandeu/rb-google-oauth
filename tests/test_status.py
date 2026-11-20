@@ -15,9 +15,9 @@ import keyring.errors
 import pytest
 import typer
 
-from google_oauth import Health, credential_status, health_check, status_exit_code, status_problems, status_report
-from google_oauth.auth_command import _tool_version, make_auth_app
-from google_oauth.errors import CliError, NotAuthorized, TokenRequestFailed
+from rb_google_oauth import Health, credential_status, health_check, status_exit_code, status_problems, status_report
+from rb_google_oauth.auth_command import _tool_version, make_auth_app
+from rb_google_oauth.errors import CliError, NotAuthorized, TokenRequestFailed
 
 from . import fake_output
 from .conftest import PSI_KEY, SA_INFO, SA_JSON, SA_KEY, FakeCreds
@@ -182,7 +182,7 @@ class TestWithoutKeychain:
             raise keyring.errors.NoKeyringError("No recommended backend was available")
 
         for name in ("get_password", "set_password", "delete_password"):
-            monkeypatch.setattr(f"google_oauth.credentials.keyring.{name}", broken)
+            monkeypatch.setattr(f"rb_google_oauth.credentials.keyring.{name}", broken)
 
     def test_env_only_works(self, app, runner, monkeypatch, fake_token):
         monkeypatch.setenv("GOOGLE_OAUTH_SERVICE_ACCOUNT_JSON", SA_JSON)

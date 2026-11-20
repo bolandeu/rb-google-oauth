@@ -13,7 +13,7 @@
 | `Profile` | Чем инструмент отличается: имя CLI, название сервиса, scopes, «исторические» env-переменные инструмента, нужные API-ключи (`ApiKey`), подсказка после входа |
 | `GoogleAuth(profile)` | Найти ключ сервисного аккаунта / API-ключ, `credentials(scopes)` (google-auth), `refresh(creds)`, `bearer(scopes).headers()` — токен с автообновлением для каждого запроса, `status(check=)`, `store_*`, `logout` |
 | `CredentialStore(profile)` | Keychain ОС через `keyring` + имена переменных окружения; `backend()` для `doctor` |
-| `make_auth_app(auth, output, check=None, api_key_checks=None)` | Готовая Typer-команда `auth login / logout / status [--check]` (модуль `google_oauth.auth_command`); `auth status` — отчёт §8 стандарта tools |
+| `make_auth_app(auth, output, check=None, api_key_checks=None)` | Готовая Typer-команда `auth login / logout / status [--check]` (модуль `rb_google_oauth.auth_command`); `auth status` — отчёт §8 стандарта tools |
 | `health_check(auth, check=None, provider=None)` → `Health` | Делегат для `Provider.health_check()` инструмента по шаблону cli-generator (см. «Проверка доступов») |
 | `credential_status`, `status_report`, `status_problems`, `status_exit_code` | Сборка отчёта `auth status --json` для инструмента со своей командой `auth` |
 | Ошибки | `CliError` (базовый — его ловит `output.guard` инструмента), `InvalidArguments` (exit 2), `NotAuthorized` (exit 3), `TokenRequestFailed` (exit 5), `CredentialStoreUnavailable`, `CredentialsUnhealthy` (exit 3) |
@@ -45,7 +45,7 @@ rb-google-oauth = { git = "https://github.com/bolandeu/google-oauth.git", tag = 
 Профиль:
 
 ```python
-from google_oauth import ApiKey, GoogleAuth, Profile
+from rb_google_oauth import ApiKey, GoogleAuth, Profile
 
 PROFILE = Profile(
     cli_name="gsc",
@@ -66,7 +66,7 @@ headers = bearer.headers()  # {"Authorization": "Bearer …"}, обновляе�
 psi_key = auth.api_key("pagespeed")  # или None
 ```
 
-Команда: `app.add_typer(make_auth_app(auth, output), name="auth")`. `core/errors.py` инструмента импортирует `CliError`/`InvalidArguments`/`NotAuthorized` отсюда, чтобы `output.guard` ловил ошибки общего кода. Тесты инструмента подменяют `google_oauth.credentials.keyring.*` (или тот же модуль через реэкспорт).
+Команда: `app.add_typer(make_auth_app(auth, output), name="auth")`. `core/errors.py` инструмента импортирует `CliError`/`InvalidArguments`/`NotAuthorized` отсюда, чтобы `output.guard` ловил ошибки общего кода. Тесты инструмента подменяют `rb_google_oauth.credentials.keyring.*` (или тот же модуль через реэкспорт).
 
 ## Проверка доступов (`auth status`, §8 стандарта tools)
 
@@ -75,12 +75,12 @@ psi_key = auth.api_key("pagespeed")  # или None
 Инструмент по шаблону cli-generator делегирует `Provider.health_check()`:
 
 ```python
-import google_oauth
+import rb_google_oauth
 
 
 def health_check(self) -> Health:
-    return google_oauth.health_check(GOOGLE_AUTH, check=lambda: self.get_json("/sites"))
-    # API-ключ: google_oauth.health_check(GOOGLE_AUTH, check, provider="pagespeed")
+    return rb_google_oauth.health_check(GOOGLE_AUTH, check=lambda: self.get_json("/sites"))
+    # API-ключ: rb_google_oauth.health_check(GOOGLE_AUTH, check, provider="pagespeed")
 ```
 
 Лимит 10 с на всю проверку, без повторов; 401/403 и отказ Google → `invalid`, сеть/429/5xx/таймаут → `unreachable`; значения секретов вычищаются из `message`. `expires_at` — `None`: у ключей нет срока.

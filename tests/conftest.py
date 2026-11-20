@@ -12,8 +12,8 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from google_oauth import ApiKey, GoogleAuth, Profile
-from google_oauth.auth_command import make_auth_app
+from rb_google_oauth import ApiKey, GoogleAuth, Profile
+from rb_google_oauth.auth_command import make_auth_app
 
 from . import fake_output
 
@@ -61,9 +61,9 @@ def same_in_ci(request: pytest.FixtureRequest) -> Callable[[str], None]:
 @pytest.fixture(autouse=True)
 def fake_keyring(monkeypatch: pytest.MonkeyPatch) -> dict[tuple[str, str], str]:
     store: dict[tuple[str, str], str] = {}
-    monkeypatch.setattr("google_oauth.credentials.keyring.set_password", lambda s, u, p: store.__setitem__((s, u), p))
-    monkeypatch.setattr("google_oauth.credentials.keyring.get_password", lambda s, u: store.get((s, u)))
-    monkeypatch.setattr("google_oauth.credentials.keyring.delete_password", lambda s, u: store.pop((s, u), None))
+    monkeypatch.setattr("rb_google_oauth.credentials.keyring.set_password", lambda s, u, p: store.__setitem__((s, u), p))
+    monkeypatch.setattr("rb_google_oauth.credentials.keyring.get_password", lambda s, u: store.get((s, u)))
+    monkeypatch.setattr("rb_google_oauth.credentials.keyring.delete_password", lambda s, u: store.pop((s, u), None))
     for var in list(os.environ):
         if var.startswith(("DEMO_", "GOOGLE_OAUTH_")):
             monkeypatch.delenv(var)

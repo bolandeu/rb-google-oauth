@@ -33,8 +33,8 @@ from syrupy.extensions.single_file import SingleFileSnapshotExtension, WriteMode
 from typer.models import ParameterInfo
 from typer.testing import CliRunner
 
-from google_oauth import GoogleAuth
-from google_oauth.auth_command import make_auth_app
+from rb_google_oauth import GoogleAuth
+from rb_google_oauth.auth_command import make_auth_app
 
 from . import fake_output
 from .conftest import PROFILE

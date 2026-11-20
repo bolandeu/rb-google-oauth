@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 
-import keyring  # noqa: F401 — реэкспорт: тесты подменяют `google_oauth.credentials.keyring.*`
+import keyring  # noqa: F401 — реэкспорт: тесты подменяют `rb_google_oauth.credentials.keyring.*`
 from keyring.backends import fail
 from rb_credentials import Store, StoreUnavailable
 

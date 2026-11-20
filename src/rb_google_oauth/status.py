@@ -6,9 +6,9 @@
   а `source`/`required` запись отчёта добавляет сам CLI —
 
       def health_check(self) -> Health:
-          return google_oauth.health_check(GOOGLE_AUTH, check=lambda: self.get_json("/sites"))
+          return rb_google_oauth.health_check(GOOGLE_AUTH, check=lambda: self.get_json("/sites"))
 
-  (`google_oauth.Health` совпадает по полям с `providers.base.Health` шаблона);
+  (`rb_google_oauth.Health` совпадает по полям с `providers.base.Health` шаблона);
   для API-ключа — `health_check(GOOGLE_AUTH, check, provider="pagespeed")`;
 - инструмент на `make_auth_app`: команда `auth status` собирает весь отчёт из
   `credential_status` + `status_report`, а exit-код и ошибку `CREDENTIALS_UNHEALTHY` —
@@ -27,7 +27,7 @@ from datetime import UTC, datetime
 from rb_credentials.status import (
     Health,
     HealthStatus,
-    Quota,  # noqa: F401 — public here since 0.1 (`google_oauth.Quota`)
+    Quota,  # noqa: F401 — public here since 0.1 (`rb_google_oauth.Quota`)
     entry,
     exit_code,
     iso,
