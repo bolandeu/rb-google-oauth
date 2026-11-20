@@ -77,7 +77,6 @@ psi_key = auth.api_key("pagespeed")  # или None
 ```python
 import google_oauth
 
-
 def health_check(self) -> Health:
     return google_oauth.health_check(GOOGLE_AUTH, check=lambda: self.get_json("/sites"))
     # API-ключ: google_oauth.health_check(GOOGLE_AUTH, check, provider="pagespeed")
@@ -115,4 +114,4 @@ uv sync
 gate check   # гейт: lock, ruff, ty, pytest, wheel, osv-scanner, gitleaks; идёт на этой машине
 ```
 
-Версия — из git-тега `vX.Y.Z`; релиз — `antagor publish` (стандарт: https://homeserver.tailee01ab.ts.net:3000/bolandeu/cli-generator/src/branch/main/skills/cli-builder/reference/standard.md, «Release»). Справка команд `auth` — контракт: `uv run pytest --snapshot-update` после её изменения.
+Версия — из git-тега `vX.Y.Z`; релиз — `antagor publish` (стандарт: https://github.com/bolandeu/python-package-gate/blob/main/skills/cli-builder/reference/standard.md, «Release»). Справка команд `auth` — контракт: `uv run pytest --snapshot-update` после её изменения.
