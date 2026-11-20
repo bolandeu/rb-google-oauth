@@ -61,7 +61,9 @@ def same_in_ci(request: pytest.FixtureRequest) -> Callable[[str], None]:
 @pytest.fixture(autouse=True)
 def fake_keyring(monkeypatch: pytest.MonkeyPatch) -> dict[tuple[str, str], str]:
     store: dict[tuple[str, str], str] = {}
-    monkeypatch.setattr("rb_google_oauth.credentials.keyring.set_password", lambda s, u, p: store.__setitem__((s, u), p))
+    monkeypatch.setattr(
+        "rb_google_oauth.credentials.keyring.set_password", lambda s, u, p: store.__setitem__((s, u), p)
+    )
     monkeypatch.setattr("rb_google_oauth.credentials.keyring.get_password", lambda s, u: store.get((s, u)))
     monkeypatch.setattr("rb_google_oauth.credentials.keyring.delete_password", lambda s, u: store.pop((s, u), None))
     for var in list(os.environ):
